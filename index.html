@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Bela AI Фото</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        /* Основные стили */
+        :root {
+            --primary: #5A67D8;
+            --primary-dark: #434190;
+            --text: #2D3748;
+            --text-light: #718096;
+            --bg: #E2E8F0;
+            --card-bg: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideInUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes microphoneWave {
+            0%, 100% { transform: scale(0.7); opacity: 0.5; }
+            50% { transform: scale(1.0); opacity: 1; }
+        }
+
+        /* Компоненты */
+        .app-container {
+            max-width: 900px;
+            width: 95%;
+            margin: 20px auto;
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100vh - 40px);
+            animation: fadeIn 0.5s ease-out;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: background-color 0.3s ease;
+        }
+
+        .page {
+            display: none;
+            padding: 24px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .page.active {
+            display: flex;
+            flex-direction: column;
+            animation: slideInUp 0.5s ease-out;
+        }
+
+        /* Кнопки */
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 4px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: #E53E3E;
+        }
+
+        .btn-danger:hover {
+            background-color: #C53030;
+        }
+
+        .btn-icon {
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            border-radius: 50%;
+        }
+        
+        .btn-icon-small {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border-radius: 50%;
+        }
+        
+        .chat-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-top: 10px;
+        }
+        
+        .ai-message .btn-icon-tts {
+            margin-left: 8px;
+            background-color: transparent;
+            color: var(--text);
+            border: none;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        
+        .ai-message.dark-theme .btn-icon-tts {
+            color: white;
+        }
+
+        .ai-message .btn-icon-tts:hover {
+            color: var(--primary);
+        }
+        
+        .recording-indicator {
+            background-color: #E53E3E;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            margin-right: 8px;
+        }
+        
+        .recording-indicator .dot {
+            animation: microphoneWave 1s infinite;
+        }
+
+        /* Формы */
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            border: 1px solid #CBD5E0;
+            border-radius: 12px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            background-color: #F7FAFC;
+            font-size: 16px;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(90, 103, 216, 0.2);
+            outline: none;
+        }
+        
+        .dark-theme .form-control {
+            background-color: #4A5568;
+            color: white;
+            border-color: #4A5568;
+        }
+
+        /* Профиль */
+        .profile-header {
+            position: relative;
+            height: 180px;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 70px;
+            background: linear-gradient(45deg, var(--primary), #9F7AEA);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .profile-avatar {
+            position: absolute;
+            bottom: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 6px solid white;
+            background-color: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            z-index: 2;
+        }
+
+        /* Навигация */
+        .nav-tabs {
+            display: flex;
+            border-bottom: 1px solid #E2E8F0;
+            margin-bottom: 24px;
+        }
+
+        .nav-tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            color: var(--text-light);
+        }
+
+        .nav-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            font-weight: 600;
+        }
+
+        .nav-tab:hover {
+            color: var(--primary);
+        }
+
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            margin: auto;
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            position: relative;
+            animation: slideInUp 0.5s ease-out;
+            text-align: center;
+        }
+        
+        .dark-theme .modal-content {
+            background-color: var(--card-bg);
+            color: var(--text);
+        }
+
+        .modal-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: var(--primary);
+        }
+
+        .modal-message {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 24px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        /* Вход */
+        .login-card {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 450px;
+            margin: 0 auto;
+            text-align: center;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .login-icon {
+            font-size: 72px;
+            margin-bottom: 20px;
+            color: var(--primary);
+            animation: pulse 2s infinite;
+        }
+
+        .gradient-text {
+            background: linear-gradient(45deg, var(--primary), #9F7AEA);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .chat-output {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 16px;
+            padding: 16px;
+            background-color: #F7FAFC;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .dark-theme .chat-output {
+            background-color: #2D3748;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 80%;
+            word-wrap: break-word;
+            animation: slideInUp 0.3s ease-out;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .user-message {
+            background-color: var(--primary);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ai-message {
+            background-color: #EDF2F7;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text);
+        }
+        
+        .ai-message.dark-theme {
+            background-color: #4A5568;
+            color: white;
+        }
+        
+        .ai-message-text {
+            flex-grow: 1;
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        .dot:nth-child(3) { animation-delay: 0s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+        }
+        
+        .upload-image-preview {
+            max-width: 100%;
+            max-height: 150px;
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .app-container {
+                width: 100%;
+                margin: 0;
+                border-radius: 0;
+                min-height: 100vh;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <!-- Страница входа/создания профиля -->
+    <div id="login-page" class="page active">
+        <div class="login-card">
+            <div class="login-icon">
+                <i class="fas fa-robot"></i>
+            </div>
+            <h1 class="text-4xl font-extrabold mb-4 gradient-text">Bela AI Фото</h1>
+            <p class="mb-6 text-gray-600">Начните создавать изображения, создав новый профиль.</p>
+            <div class="mb-4">
+                <input type="text" id="profile-create-name" placeholder="окак" class="form-control">
+            </div>
+            <button id="create-profile-btn" class="btn w-full">
+                <i class="fas fa-user-plus mr-2"></i>Создать профиль
+            </button>
+            <button id="import-profile-btn" class="btn btn-outline w-full mt-2">
+                <i class="fas fa-file-upload mr-2"></i>Загрузить профиль/перенести профиль из Bela AI (JSON)
+                <input type="file" id="import-profile-file" accept=".json" style="display: none;">
+            </button>
+            <div id="login-animation" class="mt-4 flex justify-center" style="display: none;">
+                <div class="w-12 h-12 border-4 border-t-primary border-r-primary border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+            </div>
+            <p id="login-status" class="mt-4 text-center text-sm"></p>
+        </div>
+    </div>
+
+    <!-- Главное меню -->
+    <div id="main-menu-page" class="page">
+        <div class="flex justify-center mb-6">
+            <div class="text-center">
+                <h1 class="text-4xl font-extrabold mb-2 gradient-text">Bela AI Фото</h1>
+                <p class="text-gray-600">Добро пожаловать, <span id="user-greeting-name" class="font-medium text-primary">Пользователь</span>!</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <button onclick="navigateTo('chat-page')" class="btn">
+                <i class="fas fa-comments mr-2"></i>Генерация изображений
+            </button>
+            <button onclick="navigateTo('help-page')" class="btn">
+                <i class="fas fa-info-circle mr-2"></i>Помощь
+            </button>
+            <button onclick="navigateTo('settings-page')" class="btn">
+                <i class="fas fa-cog mr-2"></i>Настройки
+            </button>
+        </div>
+    </div>
+
+    <!-- Страница чата -->
+    <div id="chat-page" class="page">
+        <div class="chat-container flex-1 flex flex-col h-full">
+            <div id="chat-output" class="chat-output flex-1 p-4 overflow-y-auto mb-4 bg-gray-50 rounded-lg shadow-inner">
+                <div class="ai-message message">
+                    <span class="ai-message-text">Привет! Я нейросеть Bela AI images, что нужно сгенерировать?</span>
+                    <button class="btn-icon-tts" onclick="textToSpeech('К сожелению, текст в аудио в этом приложении недоступно. Если вам важна эта функция пожалуйста, перейдите в приложение Bela AI.')">
+                        <i class="fas fa-volume-up"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="image-upload-preview-container" class="mb-2 hidden flex items-center justify-between p-2 rounded-lg bg-gray-100">
+                <div class="flex items-center">
+                    <img id="upload-image-preview" class="upload-image-preview mr-2 hidden" />
+                    <span id="upload-image-name" class="text-sm text-gray-600"></span>
+                </div>
+                <button id="remove-image-btn" class="text-red-500 hover:text-red-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="chat-input-container flex items-center">
+                <div id="recording-indicator" class="recording-indicator hidden">
+                    <div class="dot w-2 h-2 rounded-full bg-white mr-2"></div> Запись...
+                </div>
+                <input type="text" id="user-input" class="form-control flex-1 mr-2" placeholder="Напишите промт...">
+                
+                </button>
+                <button id="upload-image-btn" class="btn btn-icon-small w-10 h-10 rounded-full mr-1" title="Прикрепить изображение">
+                    <i class="fas fa-paperclip"></i>
+                    <input type="file" id="image-upload-input" accept="image/*" class="hidden">
+                </button>
+                <button id="send-btn" class="btn btn-icon w-12 h-12 rounded-full">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Страница профиля -->
+    <div id="profile-page_tyu" class="page">
+        <div class="profile-header"></div>
+        <div class="text-center">
+                <i class="fas fa-user text-5xl text-gray-400"></i>
+            </div>
+            <h2 id="profile-name" class="text-3xl font-bold mb-1">Имя пользователя</h2>
+            <p id="profile-status" class="text-sm font-medium text-primary mb-4">Статус: <span id="profile-status-text">Обычный</span></p>
+            <div class="profile-actions flex justify-center flex-wrap mb-6">
+               
+                </button>
+            </div>
+            <div class="profile-stats flex justify-around items-center">
+                <div class="text-center p-4 rounded-lg bg-gray-50 flex-1 mx-2">
+                    <div id="stat-messages" class="text-3xl font-bold text-primary">0</div>
+                    <div class="text-xs text-gray-500 uppercase tracking-wide">Сообщений</div>
+                </div>
+                <div class="text-center p-4 rounded-lg bg-gray-50 flex-1 mx-2">
+                <div class="text-center p-4 rounded-lg bg-gray-50 flex-1 mx-2">
+                    <div id="stat-id" class="text-sm font-mono text-gray-700">ID: ...</div>
+                    <div class="text-xs text-gray-500 uppercase tracking-wide">ID пользователя</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Страница помощи -->
+    <div id="help-page" class="page">
+        <h2 class="text-2xl font-bold mb-4">Помощь</h2>
+        <div class="card p-4">
+            <h3 class="font-bold mb-2">Часто задаваемые вопросы (FAQ)</h3>
+            <div class="faq-item">
+                <div class="faq-question cursor-pointer flex justify-between items-center" onclick="toggleFaq(this)">
+                    Что такое Bela AI фото? <i class="fas fa-chevron-down text-sm transition-transform duration-300"></i>
+                </div>
+                <div class="faq-answer mt-2 overflow-hidden max-h-0 transition-all duration-300">
+                    <p class="text-gray-600">Bela AI Фото — это отдельное мини-приложение для генерации фотографий через нейросеть Bela AI images, такое решение приняли с связи с тем, что в приложении Bela AI появляется ошибка.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Страница настроек -->
+    <div id="settings-page" class="page">
+        <h2 class="text-2xl font-bold mb-4">Настройки</h2>
+        <div class="card p-4">
+            <label class="block text-gray-700 font-bold mb-2">
+                Тема:
+            </label>
+            <div class="flex items-center space-x-4">
+                <button id="theme-light-btn" class="btn btn-outline">Светлая</button>
+                <button id="theme-dark-btn" class="btn btn-outline">Темная</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Общий модальный компонент -->
+    <div id="app-modal" class="modal">
+        <div class="modal-content">
+            <div id="modal-icon-container" class="modal-icon"></div>
+            <p id="modal-message" class="modal-message"></p>
+            <div id="modal-buttons" class="modal-buttons">
+                <button id="modal-confirm-btn" class="btn btn-danger hidden">Да</button>
+                <button id="modal-cancel-btn" class="btn btn-outline hidden">Отмена</button>
+                <button id="modal-ok-btn" class="btn">ОК</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Глобальные переменные для хранения состояния
+    let currentUser = null;
+    let pages = ['login-page', 'main-menu-page', 'chat-page', 'profile-page', 'help-page', 'settings-page'];
+    let chatHistory = [{
+        role: "model",
+        parts: [{ text: "Привет! Я ваш новый ИИ-помощник Бела. Чем могу помочь?" }]
+    }];
+    let audioContext = null;
+    let uploadedImage = null;
+    let recognition = null;
+    let isRecording = false;
+
+    // DOM-элементы
+    const appContainer = document.querySelector('.app-container');
+    const profileAvatar = document.querySelector('.profile-avatar');
+    const importProfileFile = document.getElementById('import-profile-file');
+    const avatarUploadInput = document.getElementById('avatar-upload');
+    const modal = document.getElementById('app-modal');
+    const modalMessage = document.getElementById('modal-message');
+    const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+    const modalCancelBtn = document.getElementById('modal-cancel-btn');
+    const modalOkBtn = document.getElementById('modal-ok-btn');
+    const modalIconContainer = document.getElementById('modal-icon-container');
+    const chatOutput = document.getElementById('chat-output');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    const summarizeBtn = document.getElementById('summarize-btn');
+    const generateImageBtn = document.getElementById('generate-image-btn');
+    const describeAvatarBtn = document.getElementById('describe-avatar-btn');
+    const loginStatus = document.getElementById('login-status');
+    const loginAnimation = document.getElementById('login-animation');
+    const createProfileNameInput = document.getElementById('profile-create-name');
+    const imageUploadBtn = document.getElementById('upload-image-btn');
+    const imageUploadInput = document.getElementById('image-upload-input');
+    const imageUploadPreviewContainer = document.getElementById('image-upload-preview-container');
+    const imagePreview = document.getElementById('upload-image-preview');
+    const imageNameSpan = document.getElementById('upload-image-name');
+    const removeImageBtn = document.getElementById('remove-image-btn');
+    const recordAudioBtn = document.getElementById('record-audio-btn');
+    const recordingIndicator = document.getElementById('recording-indicator');
+
+    // API URLs - ИСПРАВЛЕНО: добавлены заполнители для API ключей
+    const CHAT_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=";
+    const TTS_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=";
+    const STT_API_URL = "https://speech.googleapis.com/v1/speech:recognize?key=";
+    const REPLICATE_API_URL = "https://api.replicate.com/v1/predictions";
+    
+    // Замените эти значения на ваши реальные API ключи
+    const apiKey = "AIzaSyByBjaLAMtBs4puCZefUMySXPzXYkCn6j4";
+    const imgKey = ".";
+
+    // Кастомные модальные окна
+    function showModal(message, type = 'info', onConfirm = null, onCancel = null) {
+        modalMessage.textContent = message;
+        modalConfirmBtn.onclick = null;
+        modalCancelBtn.onclick = null;
+        modalOkBtn.onclick = null;
+
+        modalConfirmBtn.classList.add('hidden');
+        modalCancelBtn.classList.add('hidden');
+        modalOkBtn.classList.add('hidden');
+        modalIconContainer.innerHTML = '';
+
+        if (type === 'confirm' && onConfirm) {
+            modalConfirmBtn.classList.remove('hidden');
+            modalCancelBtn.classList.remove('hidden');
+            modalConfirmBtn.onclick = () => { onConfirm(); hideModal(); };
+            modalCancelBtn.onclick = () => { if (onCancel) onCancel(); hideModal(); };
+            modalIconContainer.innerHTML = '<i class="fas fa-question-circle text-blue-500"></i>';
+        } else {
+            modalOkBtn.classList.remove('hidden');
+            modalOkBtn.onclick = () => { hideModal(); };
+            if (type === 'success') {
+                modalIconContainer.innerHTML = '<i class="fas fa-check-circle text-green-500"></i>';
+            } else if (type === 'error') {
+                modalIconContainer.innerHTML = '<i class="fas fa-times-circle text-red-500"></i>';
+            } else {
+                modalIconContainer.innerHTML = '<i class="fas fa-info-circle text-gray-500"></i>';
+            }
+        }
+        modal.style.display = 'flex';
+    }
+
+    function hideModal() {
+        modal.style.display = 'none';
+    }
+
+    // Обработка данных
+    function saveUser(user) {
+        localStorage.setItem('belaAiCurrentUser', JSON.stringify(user));
+        localStorage.setItem(`belaAiUserProfile_${user.id}`, JSON.stringify(user));
+        currentUser = user;
+    }
+
+    function updateUser(id, updates) {
+        const user = JSON.parse(localStorage.getItem(`belaAiUserProfile_${id}`));
+        if (user) {
+            const updatedUser = { ...user, ...updates };
+            saveUser(updatedUser);
+            updateProfilePage();
+        }
+    }
+
+    function loadUser() {
+        const user = localStorage.getItem('belaAiCurrentUser');
+        if (user) {
+            currentUser = JSON.parse(user);
+        }
+        return currentUser;
+    }
+    
+    // UI-функции
+    function navigateTo(pageId) {
+        pages.forEach(id => {
+            const page = document.getElementById(id);
+            if (page) {
+                page.classList.remove('active');
+            }
+        });
+        const activePage = document.getElementById(pageId);
+        if (activePage) {
+            activePage.classList.add('active');
+        }
+        window.scrollTo(0, 0);
+    }
+
+    function updateProfilePage() {
+        if (!currentUser) return;
+        
+        const profileName = document.getElementById('profile-name');
+        const profileStatusText = document.getElementById('profile-status-text');
+        const statId = document.getElementById('stat-id');
+        const statMessages = document.getElementById('stat-messages');
+        const statPremium = document.getElementById('stat-premium');
+        const userGreetingName = document.getElementById('user-greeting-name');
+        
+        if (profileName) profileName.textContent = currentUser.firstName || 'Пользователь';
+        if (profileStatusText) profileStatusText.textContent = currentUser.premium ? 'Premium' : 'Обычный';
+        if (statId) statId.textContent = `ID: ${currentUser.id.substring(0, 8)}...`;
+        if (statMessages) statMessages.textContent = currentUser.messagesSent || 0;
+        if (statPremium) statPremium.textContent = currentUser.premium ? 'Да' : 'Нет';
+        if (userGreetingName) userGreetingName.textContent = currentUser.firstName || 'Пользователь';
+
+        if (currentUser.avatar && profileAvatar) {
+            profileAvatar.style.backgroundImage = `url('${currentUser.avatar}')`;
+            profileAvatar.style.backgroundSize = 'cover';
+            profileAvatar.style.backgroundPosition = 'center';
+            profileAvatar.innerHTML = '';
+        } else if (profileAvatar) {
+            profileAvatar.style.backgroundImage = 'none';
+            profileAvatar.innerHTML = '<i class="fas fa-user text-5xl text-gray-400"></i>';
+        }
+    }
+
+    function renderMessage(message) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message');
+
+        if (message.role === 'user') {
+            messageDiv.classList.add('user-message');
+            messageDiv.innerHTML = `<span class="user-message-text">${marked.parse(message.content)}</span>`;
+        } else if (message.role === 'ai') {
+            messageDiv.classList.add('ai-message');
+            messageDiv.innerHTML = `<span class="ai-message-text">${marked.parse(message.content)}</span>`;
+            
+            if (message.content !== 'loading') {
+                const speakButton = document.createElement('button');
+                speakButton.className = 'btn-icon-tts';
+                speakButton.innerHTML = '<i class="fas fa-volume-up"></i>';
+                speakButton.onclick = () => textToSpeech(message.content);
+                messageDiv.appendChild(speakButton);
+            }
+            if(isDarkTheme()){
+                messageDiv.classList.add('dark-theme');
+            }
+        } else if (message.role === 'user_image') {
+            messageDiv.classList.add('user-message');
+            messageDiv.innerHTML = `
+                ${message.text ? `<span class="user-message-text">${marked.parse(message.text)}</span>` : ''}
+                <img src="${message.content}" class="chat-image mt-2" />
+            `;
+        } else if (message.role === 'image') {
+            messageDiv.classList.add('ai-message');
+            messageDiv.innerHTML = `<img src="${message.content}" class="chat-image" />`;
+            if(isDarkTheme()){
+                messageDiv.classList.add('dark-theme');
+            }
+        } else if (message.role === 'loading') {
+            messageDiv.classList.add('ai-message');
+            messageDiv.innerHTML = `
+                <div class="loading-dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            `;
+        }
+        
+        if (chatOutput) {
+            chatOutput.appendChild(messageDiv);
+            chatOutput.scrollTop = chatOutput.scrollHeight;
+        }
+    }
+    
+    // Вспомогательные функции для работы с аудио
+    function base64ToArrayBuffer(base64) {
+        const binaryString = atob(base64);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes.buffer;
+    }
+
+    async function textToSpeech(text) {
+        if (!apiKey || apiKey === "YOUR_GEMINI_API_KEY_HERE") {
+            showModal("API ключ не настроен", 'error');
+            return;
+        }
+
+        showModal("К сожелению, текст в аудио в этом приложении недоступно. Если вам важна эта функция пожалуйста, перейдите в приложение Bela AI.", 'error');
+        
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        try {
+            const payload = {
+                contents: [{ parts: [{ text: text }] }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: {
+                            prebuiltVoiceConfig: { voiceName: "Puck" }
+                        }
+                    }
+                }
+            };
+
+            const response = await fetch(TTS_API_URL + apiKey, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`TTS API error: ${response.status} ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            const audioData = result?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+            const mimeType = result?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType;
+
+            if (!audioData || !mimeType) {
+                throw new Error("Не удалось получить аудиоданные из ответа API.");
+            }
+
+            // ИСПРАВЛЕНО: правильная обработка аудио
+            const audioBlob = new Blob([base64ToArrayBuffer(audioData)], { type: mimeType });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audio = new Audio(audioUrl);
+            
+            audio.onended = () => {
+                URL.revokeObjectURL(audioUrl);
+                hideModal();
+            };
+            
+            audio.play();
+
+        } catch (error) {
+            console.error("Ошибка при генерации аудио:", error);
+            hideModal();
+            showModal("К сожалению, не удалось сгенерировать аудио. Пожалуйста, попробуйте еще раз.", 'error');
+        }
+    }
+    
+    // Функции для голосового ввода
+    function setupSpeechRecognition() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            showModal("Ваш браузер не поддерживает распознавание речи. Пожалуйста, используйте другой браузер.", 'error');
+            return null;
+        }
+
+        recognition = new SpeechRecognition();
+        recognition.interimResults = false;
+        recognition.lang = 'ru-RU';
+
+        recognition.onstart = function() {
+            isRecording = true;
+            if (recordingIndicator) recordingIndicator.classList.remove('hidden');
+            if (recordAudioBtn) recordAudioBtn.innerHTML = '<i class="fas fa-stop-circle text-red-500"></i>';
+        };
+
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            if (userInput) userInput.value = transcript;
+            isRecording = false;
+            if (recordingIndicator) recordingIndicator.classList.add('hidden');
+            if (recordAudioBtn) recordAudioBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+            sendMessageToGemini(transcript);
+        };
+
+        recognition.onerror = function(event) {
+            console.error("Speech recognition error:", event.error);
+            isRecording = false;
+            if (recordingIndicator) recordingIndicator.classList.add('hidden');
+            if (recordAudioBtn) recordAudioBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+            showModal(`Ошибка распознавания речи: ${event.error}.`, 'error');
+        };
+
+        recognition.onend = function() {
+            if (isRecording) {
+                isRecording = false;
+                if (recordingIndicator) recordingIndicator.classList.add('hidden');
+                if (recordAudioBtn) recordAudioBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                showModal("Запись остановлена. Пожалуйста, нажмите кнопку снова, чтобы отправить.", 'info');
+            }
+        };
+
+        return recognition;
+    }
+
+    async function sendMessageToGemini(userMessage, image = null) {
+        if (!userMessage && !image) return;
+
+        if (!apiKey || apiKey === "YOUR_GEMINI_API_KEY_HERE") {
+            showModal("API ключ не настроен. Пожалуйста, добавьте ваш Gemini API ключ.", 'error');
+            return;
+        }
+
+        // Добавляем сообщение пользователя в UI
+        if (image) {
+            renderMessage({ role: 'user_image', text: userMessage, content: image });
+        } else {
+            renderMessage({ role: 'user', content: userMessage });
+        }
+        
+        // Создаем контент для отправки в API
+        const contents = [];
+        if (image) {
+            const parts = [
+                { text: userMessage },
+                { inlineData: { mimeType: "image/jpeg", data: image.split(',')[1] }}
+            ];
+            contents.push({ role: "user", parts: parts });
+        } else {
+            contents.push({ role: "user", parts: [{ text: userMessage }] });
+        }
+        
+        // Показываем индикатор загрузки
+        renderMessage({ role: "ai", content: "loading" });
+
+        try {
+            const payload = {
+                contents: contents,
+                tools: [{ "google_search": {} }],
+                systemInstruction: {
+                    parts: [{ text: `
+                        You are Bela, a helpful and friendly AI assistant.
+                        You should respond in the Russian language.
+                        Your purpose is to assist the user with their queries in a concise and polite manner.
+                        You can use Google Search to find up-to-date information.
+                    `}]
+                }
+            };
+
+            const response = await fetch(CHAT_API_URL + apiKey, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status} ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            const text = result.candidates[0].content.parts[0].text;
+            
+            // Удаляем индикатор загрузки
+            if (chatOutput && chatOutput.lastElementChild) {
+                chatOutput.lastElementChild.remove();
+            }
+            
+            // Рендерим реальный ответ
+            renderMessage({ role: 'ai', content: text });
+            
+            // Обновляем счетчик сообщений
+            if (currentUser) {
+                updateUser(currentUser.id, { messagesSent: (currentUser.messagesSent || 0) + 1 });
+            }
+
+        } catch (error) {
+            console.error("Error communicating with Gemini API:", error);
+            if (chatOutput && chatOutput.lastElementChild) {
+                chatOutput.lastElementChild.remove();
+            }
+            renderMessage({ role: 'ai', content: "К сожалению, произошла ошибка. Пожалуйста, попробуйте еще раз." });
+        } finally {
+            if (chatOutput) {
+                chatOutput.scrollTop = chatOutput.scrollHeight;
+            }
+        }
+    }
+    
+    // Функция для генерации изображения
+    async function generateImage(prompt) {
+        if (!imgKey || imgKey === "YOUR_REPLICATE_API_KEY_HERE") {
+            showModal("API ключ не настроен. Пожалуйста, добавьте ваш Replicate API ключ.", 'error');
+            return;
+        }
+
+        renderMessage({ role: 'user', content: `Сгенерировать изображение: ${prompt}` });
+        renderMessage({ role: "ai", content: "loading" });
+
+        try {
+            const payload = {
+                version: "b216111f93011400a40f878f1370f1a1d132644265448373b185b9856a9359e1",
+                input: {
+                    prompt: prompt,
+                    negative_prompt: "text, blurry, out of focus, poor quality, bad anatomy",
+                    output_format: "jpeg",
+                    output_quality: 90
+                }
+            };
+
+            const response = await fetch(REPLICATE_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${imgKey}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status} ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            const predictionId = result.id;
+            
+            let imageUrl = null;
+            let status = result.status;
+
+            // Поллинг (ожидание завершения генерации)
+            while(status !== 'succeeded' && status !== 'failed') {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                const pollResponse = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
+                    headers: { 'Authorization': `Token ${imgKey}` }
+                });
+                const pollResult = await pollResponse.json();
+                status = pollResult.status;
+                if (status === 'succeeded' && pollResult.output && pollResult.output.length > 0) {
+                    imageUrl = pollResult.output[0];
+                } else if (status === 'failed') {
+                    throw new Error("Replicate API failed to generate image.");
+                }
+            }
+
+            if (chatOutput && chatOutput.lastElementChild) {
+                chatOutput.lastElementChild.remove();
+            }
+            
+            if (imageUrl) {
+                renderMessage({ role: 'image', content: imageUrl });
+                if (currentUser) {
+                    updateUser(currentUser.id, { messagesSent: (currentUser.messagesSent || 0) + 1 });
+                }
+            } else {
+                renderMessage({ role: 'ai', content: "Не удалось получить изображение. Попробуйте еще раз." });
+            }
+
+        } catch (error) {
+            console.error("Ошибка при генерации изображения:", error);
+            if (chatOutput && chatOutput.lastElementChild) {
+                chatOutput.lastElementChild.remove();
+            }
+            renderMessage({ role: 'ai', content: "К сожалению, не удалось сгенерировать изображение. Пожалуйста, попробуйте еще раз." });
+        }
+    }
+    
+    // Функция для суммирования текста
+    async function summarizeText(textToSummarize) {
+        if (!apiKey || apiKey === "YOUR_GEMINI_API_KEY_HERE") {
+            showModal("API ключ не настроен. Пожалуйста, добавьте ваш Gemini API ключ.", 'error');
+            return;
+        }
+
+        renderMessage({ role: 'user', content: `Суммировать: ${textToSummarize}` });
+        renderMessage({ role: "ai", content: "loading" });
+        
+        try {
+            const payload = {
+                contents: [{
+                    parts: [{ text: `Summarize the following text in Russian concisely:\n\n${textToSummarize}` }]
+                }],
+                systemInstruction: {
+                     parts: [{ text: `You are a helpful and concise AI assistant. You must summarize the provided text in Russian.` }]
+                }
+            };
+            
+            const response = await fetch(CHAT_API_URL + apiKey, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) throw new Error("API failed to summarize.");
+
+            const result = await response.json();
+            const summary = result.candidates[0].content.parts[0].text;
+            
+            if (chatOutput && chatOutput.lastElementChild) {
+                chatOutput.lastElementChild.remove();
+            }
+            
+            renderMessage({ role: 'ai', content: summary });
+            
+            if (currentUser) {
+                updateUser(currentUser.id, { messagesSent: (currentUser.messagesSent || 0) + 1 });
+            }
+
+        } catch (error) {
+            console.error("Error summarizing text:", error);
+            if (chatOutput && chatOutput.lastElementChild) {
+                chatOutput.lastElementChild.remove();
+            }
+            renderMessage({ role: 'ai', content: "К сожалению, произошла ошибка при суммировании." });
+        }
+    }
+
+    // Функция для описания аватара
+    async function describeAvatar(base64Image) {
+        if (!apiKey || apiKey === "YOUR_GEMINI_API_KEY_HERE") {
+            showModal("API ключ не настроен. Пожалуйста, добавьте ваш Gemini API ключ.", 'error');
+            return;
+        }
+
+        const base64Data = base64Image.split(',')[1];
+        
+        showModal("Анализирую изображение...", 'info');
+
+        try {
+            const payload = {
+                contents: [{
+                    parts: [
+                        { text: "Describe this image in Russian in a creative and interesting way. Do not mention that it is a profile picture or avatar."},
+                        { inlineData: { mimeType: "image/jpeg", data: base64Data }}
+                    ]
+                }]
+            };
+            
+            const response = await fetch(CHAT_API_URL + apiKey, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            if (!response.ok) throw new Error("API failed to describe image.");
+            
+            const result = await response.json();
+            const description = result.candidates[0].content.parts[0].text;
+            
+            showModal(description, 'info');
+
+        } catch (error) {
+            console.error("Error describing avatar:", error);
+            showModal("К сожалению, не удалось описать изображение. Попробуйте другой файл.", 'error');
+        }
+    }
+
+    // Функция для переключения FAQ
+    function toggleFaq(element) {
+        const answer = element.nextElementSibling;
+        const icon = element.querySelector('i');
+        const isActive = answer.classList.contains('max-h-96');
+
+        if (isActive) {
+            answer.classList.remove('max-h-96');
+            icon.classList.remove('rotate-180');
+        } else {
+            // Закрыть все остальные FAQ
+            document.querySelectorAll('.faq-answer').forEach(item => {
+                item.classList.remove('max-h-96');
+            });
+            document.querySelectorAll('.faq-question i').forEach(item => {
+                item.classList.remove('rotate-180');
+            });
+            // Открыть текущий
+            answer.classList.add('max-h-96');
+            icon.classList.add('rotate-180');
+        }
+    }
+    
+    // ИСПРАВЛЕНО: правильное определение темы
+    function isDarkTheme() {
+        const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+        return bgColor === '#1A202C';
+    }
+
+    // Инициализация темы
+    function setTheme(theme) {
+        const root = document.documentElement;
+        if (theme === 'dark') {
+            root.style.setProperty('--bg', '#1A202C');
+            root.style.setProperty('--card-bg', '#2D3748');
+            root.style.setProperty('--text', '#F7FAFC');
+            root.style.setProperty('--text-light', '#A0AEC0');
+            
+            const themeDarkBtn = document.getElementById('theme-dark-btn');
+            const themeLightBtn = document.getElementById('theme-light-btn');
+            
+            if (themeDarkBtn) {
+                themeDarkBtn.classList.remove('btn-outline');
+                themeDarkBtn.classList.add('btn');
+            }
+            
+            if (themeLightBtn) {
+                themeLightBtn.classList.remove('btn');
+                themeLightBtn.classList.add('btn-outline');
+            }
+            
+            if (chatOutput) {
+                chatOutput.style.backgroundColor = '#2D3748';
+            }
+            
+            document.querySelectorAll('.ai-message').forEach(el => el.classList.add('dark-theme'));
+            document.querySelectorAll('.login-card, .app-container').forEach(el => el.classList.add('dark-theme'));
+        } else {
+            root.style.setProperty('--bg', '#E2E8F0');
+            root.style.setProperty('--card-bg', '#FFFFFF');
+            root.style.setProperty('--text', '#2D3748');
+            root.style.setProperty('--text-light', '#718096');
+            
+            const themeLightBtn = document.getElementById('theme-light-btn');
+            const themeDarkBtn = document.getElementById('theme-dark-btn');
+            
+            if (themeLightBtn) {
+                themeLightBtn.classList.remove('btn-outline');
+                themeLightBtn.classList.add('btn');
+            }
+            
+            if (themeDarkBtn) {
+                themeDarkBtn.classList.remove('btn');
+                themeDarkBtn.classList.add('btn-outline');
+            }
+            
+            if (chatOutput) {
+                chatOutput.style.backgroundColor = '#F7FAFC';
+            }
+            
+            document.querySelectorAll('.ai-message').forEach(el => el.classList.remove('dark-theme'));
+            document.querySelectorAll('.login-card, .app-container').forEach(el => el.classList.remove('dark-theme'));
+        }
+    }
+
+    // Обработчики событий
+    document.getElementById('create-profile-btn').addEventListener('click', () => {
+        const profileName = createProfileNameInput.value.trim();
+        if (!profileName) {
+            showModal("Пожалуйста, введите ваше имя.", 'error');
+            return;
+        }
+
+        const newUserId = `user-${Date.now()}`;
+        const newUser = {
+            id: newUserId,
+            firstName: profileName,
+            messagesSent: 0,
+            premium: false,
+            avatar: null
+        };
+        saveUser(newUser);
+        updateProfilePage();
+        navigateTo('main-menu-page');
+    });
+    
+    sendBtn.addEventListener('click', () => {
+        const text = userInput.value.trim();
+        if (text === '' && !uploadedImage) return;
+
+        sendMessageToGemini(text, uploadedImage);
+
+        userInput.value = '';
+        uploadedImage = null;
+        imageUploadPreviewContainer.classList.add('hidden');
+        imagePreview.classList.add('hidden');
+    });
+
+    // ИСПРАВЛЕНО: обработка нажатия Enter
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendBtn.click();
+        }
+    });
+
+    imageUploadBtn.addEventListener('click', () => {
+        imageUploadInput.click();
+    });
+
+    imageUploadInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            uploadedImage = evt.target.result;
+            imagePreview.src = uploadedImage;
+            imagePreview.classList.remove('hidden');
+            imageNameSpan.textContent = file.name;
+            imageUploadPreviewContainer.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    });
+    
+    removeImageBtn.addEventListener('click', () => {
+        uploadedImage = null;
+        imageUploadInput.value = '';
+        imageUploadPreviewContainer.classList.add('hidden');
+        imagePreview.classList.add('hidden');
+    });
+    
+    // ИСПРАВЛЕНО: обработчик для кнопки голосового ввода
+    recordAudioBtn.addEventListener('click', () => {
+        if (!recognition) {
+            recognition = setupSpeechRecognition();
+            if (!recognition) return;
+        }
+        
+        if (isRecording) {
+            recognition.stop();
+        } else {
+            if (userInput) userInput.value = '';
+            recognition.start();
+        }
+    });
+    
+    generateImageBtn.addEventListener('click', () => {
+        const prompt = userInput.value.trim();
+        if (prompt === '') {
+            showModal("Пожалуйста, введите описание для генерации изображения.", 'error');
+            return;
+        }
+        generateImage(prompt);
+        userInput.value = '';
+    });
+    
+    summarizeBtn.addEventListener('click', () => {
+        const text = userInput.value.trim();
+        if (text === '') {
+            showModal("Пожалуйста, введите текст для суммирования.", 'error');
+            return;
+        }
+        summarizeText(text);
+        userInput.value = '';
+    });
+    
+    describeAvatarBtn.addEventListener('click', () => {
+        if (!currentUser || !currentUser.avatar) {
+            showModal("Сначала загрузите аватар на страницу.", 'error');
+            return;
+        }
+        describeAvatar(currentUser.avatar);
+    });
+
+    document.getElementById('edit-name-btn').addEventListener('click', () => {
+        const newName = prompt("Введите новое имя:");
+        if (newName) {
+            updateUser(currentUser.id, { firstName: newName });
+            showModal("Имя обновлено.", 'success');
+        }
+    });
+
+    document.getElementById('avatar-upload-btn').addEventListener('click', () => {
+        avatarUploadInput.click();
+    });
+
+    avatarUploadInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file || !file.type.startsWith("image/")) {
+            showModal("Пожалуйста, выберите файл изображения.", 'error');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            updateUser(currentUser.id, { avatar: evt.target.result });
+            showModal("Аватар обновлен.", 'success');
+        };
+        reader.readAsDataURL(file);
+    });
+
+    document.getElementById('import-profile-btn').addEventListener('click', () => {
+        importProfileFile.click();
+    });
+
+    importProfileFile.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            try {
+                const importedProfile = JSON.parse(evt.target.result);
+                if (!importedProfile.id) throw new Error("Некорректный формат профиля.");
+                localStorage.setItem('belaAiCurrentUser', JSON.stringify(importedProfile));
+                localStorage.setItem(`belaAiUserProfile_${importedProfile.id}`, JSON.stringify(importedProfile));
+                showModal("Профиль успешно импортирован!", 'success', () => {
+                    location.reload();
+                });
+            } catch (err) {
+                showModal("Ошибка при импорте профиля: " + err.message, 'error');
+            }
+        };
+        reader.readAsText(file);
+    });
+
+    document.getElementById('export-profile-btn').addEventListener('click', () => {
+        if (!currentUser) {
+            showModal("Профиль не найден.", 'error');
+            return;
+        }
+        const blob = new Blob([JSON.stringify(currentUser, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `bela_profile_${currentUser.id}.json`;
+        a.click();
+        showModal("Профиль успешно экспортирован.", 'success');
+    });
+
+    document.getElementById('reset-profile-btn').addEventListener('click', () => {
+        showModal("Вы уверены, что хотите удалить профиль? Это действие необратимо.", 'confirm', () => {
+            localStorage.removeItem('belaAiCurrentUser');
+            localStorage.removeItem(`belaAiUserProfile_${currentUser.id}`);
+            location.reload();
+        });
+    });
+
+    document.getElementById('activate-premium-btn').addEventListener('click', () => {
+        if (currentUser) {
+            updateUser(currentUser.id, { premium: true });
+            showModal("💎 Premium активирован! Спасибо за поддержку.", 'success');
+        }
+    });
+    
+    document.getElementById('theme-light-btn').addEventListener('click', () => setTheme('light'));
+    document.getElementById('theme-dark-btn').addEventListener('click', () => setTheme('dark'));
+
+    // Инициализация приложения
+    window.onload = () => {
+        loadUser();
+        if (currentUser) {
+            navigateTo('main-menu-page');
+            updateProfilePage();
+        }
+        setTheme('light');
+        setupSpeechRecognition();
+    };
+</script>
+
+</body>
+</html>
